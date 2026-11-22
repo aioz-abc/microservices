@@ -1,66 +1,50 @@
 # Microservices: User Service & Auth Service
 
-This project demonstrates a simple microservice architecture using **FastAPI**, applying clean code practices and the **SOLID (S & D)** principles.  
-The system consists of two independent services:
+Two independent **FastAPI** services that talk to each other over HTTP, built to practise clean
+architecture: business logic hidden behind interfaces, wired in through dependency injection
+(the **S** and **D** of SOLID).
 
-- **User Service (port 8001)** – manages user data  
-- **Auth Service (port 8002)** – handles registration and login
+| Service | Port | Responsibility |
+|---|---|---|
+| **User Service** | 8001 | stores users, looks them up by email |
+| **Auth Service** | 8002 | registration and login; calls the User Service over HTTP |
 
-Both services communicate via HTTP requests.
+## Architecture
 
----
+```
+client ──▶ Auth Service (8002) ──HTTP──▶ User Service (8001)
+            controller.py                 controller.py
+               │ depends on                  │ depends on
+            interfaces.py (abstract)      interfaces.py (abstract)
+               │ implemented by              │ implemented by
+            service_impl.py               service_impl.py
+```
 
-## 🚀 Running the Services
+Each service has the same layers:
 
-Run both services from the project root:
-uvicorn service_user.app:app --reload --port 8001 & uvicorn service_auth.app:app --reload --port 8002
+- `controller.py`: API endpoints only, no business logic
+- `interfaces.py`: abstract service contract
+- `service_impl.py`: the implementation
+- `dependencies.py`: binds the interface to the implementation (DI)
 
-Or run separately:
+Shared request/response models live in `common/schemas.py`. Emails are validated by Pydantic.
+
+## Run
+
+```bash
+pip install -r requirements.txt "pydantic[email]"
+
 uvicorn service_user.app:app --reload --port 8001
 uvicorn service_auth.app:app --reload --port 8002
+```
 
-📌 API Documentation
-User Service Swagger: http://127.0.0.1:8001/docs
+Swagger docs: http://127.0.0.1:8001/docs and http://127.0.0.1:8002/docs
 
-Auth Service Swagger: http://127.0.0.1:8002/docs
+## Scope
 
-🔧 Installation
+This is a learning project about service boundaries and DI. Users are kept in memory and the auth
+token is a placeholder, so it's not meant for production.
 
-pip install -r requirements.txt
-pip install "pydantic[email]"
-pip install email-validator
+## Tech stack
 
-📂 Project Structure
-
-service_user/
-service_auth/
-common/
-README.md
-
-Each service includes:
-
-- [ ] controller.py – API endpoints
-
-- [ ] interfaces.py – abstract service contracts
-
-- [ ] service_impl.py – business logic implementation
-
-- [ ] dependencies.py – DI bindings
-
-schemas.py – request/response models
-
-✨ Features
-- [ ] Clean separation between business logic and controllers
-
-- [ ] Dependency injection using abstractions
-
-- [ ] Email validation
-
-- [ ] Simple registration and login flow
-
-- [ ] Two fully isolated FastAPI microservices
-
-
-
-👤 Author
-Aizhan
+Python · FastAPI · Pydantic · Uvicorn · requests
